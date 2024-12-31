@@ -1,10 +1,10 @@
 <template>
-  <div class="section">
+  <div class="section" @keydown.enter="handleEnterKey">
     <div class="container">
       <div class="row full-height justify-content-center">
         <div class="col-12 text-center align-self-center py-5">
           <div class="section pb-5 pt-5 pt-sm-2 text-center">
-            <h6 class="mb-0 pb-3"><span>Log In </span><span>Sign Up</span></h6>
+            <h6 class="mb-0 pb-3"><span>登 录</span><span>注 册</span></h6>
             <input class="checkbox" type="checkbox" v-model="isSignup" id="reg-log"/>
             <label for="reg-log"></label>
             <div class="card-3d-wrap mx-auto">
@@ -12,15 +12,15 @@
                 <div class="card-front">
                   <div class="center-wrap">
                     <div class="section text-center">
-                      <h4 class="mb-4 pb-3">Log In</h4>
+                      <h4 class="mb-4 pb-3">登 录</h4>
                       <div class="form-group">
                         <input
                             v-model="loginEmail"
                             type="email"
                             name="logemail"
                             class="form-style"
-                            placeholder="Your Email"
-                            id="logemail"
+                            placeholder="你的邮箱"
+                            id="loginEmail"
                             autocomplete="off"
                         />
                         <i class="input-icon uil uil-at"></i>
@@ -31,13 +31,13 @@
                             type="password"
                             name="logpass"
                             class="form-style"
-                            placeholder="Your Password"
-                            id="logpass"
+                            placeholder="你的密码"
+                            id="loginPass"
                             autocomplete="off"
                         />
                         <i class="input-icon uil uil-lock-alt"></i>
                       </div>
-                      <a href="#" class="btn mt-4">submit</a>
+                      <a ref="loginBtn"  @click="submitLogin" class="btn mt-4">登录</a>
                       <p class="mb-0 mt-4 text-center"><a href="#0" class="link">Forgot your password?</a></p>
                     </div>
                   </div>
@@ -45,15 +45,15 @@
                 <div class="card-back">
                   <div class="center-wrap">
                     <div class="section text-center">
-                      <h4 class="mb-4 pb-3">Sign Up</h4>
+                      <h4 class="mb-4 pb-3">注 册</h4>
                       <div class="form-group">
                         <input
                             v-model="signupName"
                             type="text"
                             name="logname"
                             class="form-style"
-                            placeholder="Your Full Name"
-                            id="logname"
+                            placeholder="你的名字"
+                            id="signupName"
                             autocomplete="off"
                         />
                         <i class="input-icon uil uil-user"></i>
@@ -64,8 +64,8 @@
                             type="email"
                             name="logemail"
                             class="form-style"
-                            placeholder="Your Email"
-                            id="logemail"
+                            placeholder="你的邮箱"
+                            id="signupEmail"
                             autocomplete="off"
                         />
                         <i class="input-icon uil uil-at"></i>
@@ -76,13 +76,13 @@
                             type="password"
                             name="logpass"
                             class="form-style"
-                            placeholder="Your Password"
-                            id="logpass"
+                            placeholder="你的密码"
+                            id="SignupPass"
                             autocomplete="off"
                         />
                         <i class="input-icon uil uil-lock-alt"></i>
                       </div>
-                      <a @click="submitSignup" class="btn mt-4">注册</a>
+                      <a ref="signupBtn" @click="submitSignup" class="btn mt-4">注册</a>
                     </div>
                   </div>
                 </div>
@@ -92,17 +92,23 @@
         </div>
       </div>
     </div>
+    <div>
+      <!-- 使用 ref 确保你能通过 $refs 访问 AuthService -->
+      <AuthService ref="authService"/>
+      <!-- 传递 loading 状态给 Loading 组件 -->
+      <Loading :loading="loading"/>
+    </div>
   </div>
 </template>
 
 <script>
-import axios from "axios";
-import CryptoJS from "crypto-js";
 import Loading from "./../loading/loading.vue"; // 引入 Loading 组件
+import AuthService from "@/api/authService.vue";
 
 export default {
   components: {
-    Loading
+    Loading,
+    AuthService
   },
   data() {
     return {
@@ -110,43 +116,104 @@ export default {
       signupName: "",
       signupEmail: "",
       signupPassword: "",
+      loginEmail: "",
+      loginPassword: "",
       loading: false,
       timeout: null
     };
   },
   methods: {
+    // 监听回车事件
+    handleEnterKey(event){
+      // 判断当前是登录页面还是注册页面
+      if (this.isSignup) {
+        this.$refs.signupBtn.click();  // 模拟点击注册按钮
+      } else {
+        this.$refs.loginBtn.click();   // 模拟点击登录按钮
+      }
+    },
     async submitSignup() {
-      this.loading = true; // 显示加载动画
+      this.loading = true;
 
-      // 加密密码
-      const encryptedPassword = CryptoJS.SHA512(this.signupPassword).toString(CryptoJS.enc.Base64);
+      // 非空验证
+      if (!this.signupName || !this.signupEmail || !this.signupPassword) {
+        this.loading = false;
+        alert("所有字段都必须填写");
+        return;
+      }
+
+      // 邮箱格式验证
+      const emailRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+      if (!emailRegex.test(this.signupEmail)) {
+        this.loading = false;
+        alert("请输入有效的邮箱地址");
+        return;
+      }
+
+      // 密码长度验证
+      if (this.signupPassword.length < 6) {
+        this.loading = false;
+        alert("密码长度必须至少为 6 个字符");
+        return;
+      }
+
+      // 组织提交的数据
       const signupData = {
-        name: this.signupName,
+        username: this.signupName,
         email: this.signupEmail,
-        password: encryptedPassword
+        password: this.signupPassword
       };
 
-      // 请求超时控制
-      this.timeout = setTimeout(() => {
-        this.loading = false;
-        alert("Request timed out. Please try again later.");
-      }, 10000); // 超过10秒停止请求
+      const result = await this.$refs.authService.submitSignup(signupData);
+      this.loading = false;
 
-      try {
-        const response = await axios.post("http://127.0.0.1:7990/user_signup", signupData);
-        clearTimeout(this.timeout); // 请求成功清除超时
-        this.loading = false;
+      if (result.success) {
+        alert("注册失败: " + result.message);
+      } else {
+        alert("注册成功！");
+        // 切换回登录页面
+        this.isSignup = false;
+      }
+    },
 
-        if (response.data.success) {
-          alert("Signup successful");
-          // 可以在此执行其他操作，如跳转到登录页面等
-        } else {
-          alert("Signup failed: " + response.data.message);
+    async submitLogin() {
+      this.loading = true;
+
+      // 非空验证
+      if (!this.loginEmail || !this.loginPassword) {
+        this.loading = false;
+        alert("所有字段都必须填写");
+        return;
+      }
+
+      // 邮箱格式验证
+      const emailRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+      if (!emailRegex.test(this.loginEmail)) {
+        this.loading = false;
+        alert("请输入有效的邮箱地址");
+        return;
+      }
+
+      const loginData = {
+        email: this.loginEmail,
+        password: this.loginPassword
+      };
+
+      const result = await this.$refs.authService.submitLogin(loginData);
+      console.log(result)
+      this.loading = false;
+
+      if (result.success) {
+        if (result.token){
+          // 登录成功，存储token
+          localStorage.setItem('userToken', result.token);
         }
-      } catch (error) {
-        clearTimeout(this.timeout); // 请求失败清除超时
-        this.loading = false;
-        alert("请求超时，请稍后重试.");
+
+        // 退出登陆时清除token
+        // localStorage.removeItem('userToken');
+        this.$router.push({name: 'Dash'});  // 跳转到登录页
+      } else {
+        alert(result.message);
       }
     }
   }
@@ -157,6 +224,7 @@ export default {
 @import url("https://fonts.googleapis.com/css?family=Poppins:400,500,600,700,800,900");
 @import url('https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css');
 @import url('https://unicons.iconscout.com/release/v2.1.9/css/unicons.css');
+
 body {
   font-family: "Poppins", sans-serif;
   font-weight: 300;

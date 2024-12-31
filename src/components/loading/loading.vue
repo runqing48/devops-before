@@ -1,22 +1,16 @@
 <script>
 export default {
-  data() {
-    return {
-      // 控制加载动画显示的状态
-      loading: true
-    };
-  },
-  mounted() {
-    // 模拟加载过程，2秒后将 loading 设置为 false，隐藏加载动画
-    setTimeout(() => {
-      this.loading = false;
-    }, 2000);
+  props: {
+    loading: {
+      type: Boolean,
+      default: false
+    }
   }
 };
 </script>
 
 <template>
-  <div class="loader-container">
+  <div class="loader-container" v-if="loading">
     <!-- 只有当 loading 为 true 时，显示加载动画 -->
     <div class="loader" v-if="loading"></div>
   </div>
@@ -37,7 +31,7 @@ export default {
 }
 
 .loader {
-  color: #000;
+  color: #ffff;
   width: 4px;
   aspect-ratio: 1;
   border-radius: 50%;

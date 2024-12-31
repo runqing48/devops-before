@@ -12,11 +12,14 @@
     "axios": "^1.7.9",
     "crypto-js": "^4.2.0",
     "element-plus": "^2.9.1",
+    "jwt-decode": "^4.0.0",
+    "tdesign-vue-next": "^1.10.5",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
+    "less": "^4.2.1",
     "vite": "^6.0.5",
     "vite-plugin-vue-devtools": "^7.6.8"
   }
