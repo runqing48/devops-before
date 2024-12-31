@@ -13,13 +13,8 @@ export default {
 <template>
   <div>
     <navigation></navigation>
-    <!-- 这里是 dash 页面其他的内容 -->
-    <h1>welcome dash</h1>
   </div>
 </template>
 
 <style scoped>
-.test{
-  background-color: #c3c3c3;
-}
 </style>
